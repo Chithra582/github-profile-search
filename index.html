@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GitHub Profile Search</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0d1117;
+      color: #c9d1d9;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 50px;
+    }
+
+    .title {
+      font-size: 48px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #58a6ff 0%, #bc8cff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 12px;
+    }
+
+    .subtitle {
+      font-size: 18px;
+      color: #8b949e;
+    }
+
+    .search-wrapper {
+      max-width: 600px;
+      margin: 0 auto 60px;
+    }
+
+    .search-container {
+      display: flex;
+      gap: 12px;
+    }
+
+    .search-input {
+      flex: 1;
+      padding: 16px 20px;
+      background: #161b22;
+      border: 2px solid #30363d;
+      border-radius: 12px;
+      color: #c9d1d9;
+      font-size: 16px;
+      transition: all 0.3s ease;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: #58a6ff;
+      box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+    }
+
+    .search-input::placeholder {
+      color: #6e7681;
+    }
+
+    .search-btn {
+      padding: 16px 32px;
+      background: linear-gradient(135deg, #58a6ff 0%, #bc8cff 100%);
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .search-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(88, 166, 255, 0.4);
+    }
+
+    .search-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .error-message {
+      margin-top: 16px;
+      padding: 16px;
+      background: rgba(248, 81, 73, 0.1);
+      border: 1px solid rgba(248, 81, 73, 0.3);
+      border-radius: 8px;
+      color: #f85149;
+      display: none;
+    }
+
+    .error-message.show {
+      display: block;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 60px 20px;
+      color: #8b949e;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      margin: 0 auto 16px;
+      border: 4px solid #30363d;
+      border-top-color: #58a6ff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .profile-section {
+      display: none;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .profile-section.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .profile-card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 16px;
+      padding: 40px;
+      margin-bottom: 40px;
+    }
+
+    .profile-header {
+      display: flex;
+      gap: 40px;
+      margin-bottom: 40px;
+    }
+
+    .avatar {
+      width: 180px;
+      height: 180px;
+      border-radius: 50%;
+      border: 4px solid #30363d;
+      flex-shrink: 0;
+    }
+
+    .profile-info {
+      flex: 1;
+    }
+
+    .profile-name {
+      font-size: 36px;
+      font-weight: 700;
+      color: #f0f6fc;
+      margin-bottom: 8px;
+    }
+
+    .profile-username {
+      font-size: 20px;
+      color: #8b949e;
+      margin-bottom: 16px;
+    }
+
+    .profile-bio {
+      font-size: 16px;
+      color: #c9d1d9;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+
+    .profile-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 24px;
+      margin-bottom: 20px;
+    }
+
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #8b949e;
+      font-size: 15px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      padding-top: 30px;
+      border-top: 1px solid #30363d;
+    }
+
+    .stat-item {
+      text-align: center;
+      padding: 20px;
+      background: #0d1117;
+      border-radius: 12px;
+      border: 1px solid #30363d;
+      transition: all 0.3s ease;
+    }
+
+    .stat-item:hover {
+      border-color: #58a6ff;
+      transform: translateY(-4px);
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: #8b949e;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #58a6ff 0%, #bc8cff 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .section-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #f0f6fc;
+      margin-bottom: 24px;
+    }
+
+    .repos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 20px;
+    }
+
+    .repo-card {
+      background: linear-gradient(95deg, #111729 3%, #1d1b48 99.61%);
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 24px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+
+    .repo-card:hover {
+      border-color: #58a6ff;
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(88, 166, 255, 0.2);
+    }
+
+    .repo-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: #58a6ff;
+      margin-bottom: 12px;
+    }
+
+    .repo-description {
+      color: #8b949e;
+      font-size: 14px;
+      line-height: 1.5;
+      margin-bottom: 16px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .repo-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .repo-language {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: #8b949e;
+    }
+
+    .language-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #58a6ff;
+    }
+
+    .repo-stats {
+      display: flex;
+      gap: 16px;
+      font-size: 13px;
+      color: #8b949e;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 80px 20px;
+    }
+
+    .empty-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #f0f6fc;
+      margin-bottom: 12px;
+    }
+
+    .empty-text {
+      font-size: 16px;
+      color: #8b949e;
+    }
+
+    @media (max-width: 768px) {
+      .title {
+        font-size: 36px;
+      }
+
+      .search-container {
+        flex-direction: column;
+      }
+
+      .profile-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+
+      .repos-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1 class="title">GitHub Profile Search</h1>
+      <p class="subtitle">Discover and explore GitHub profiles</p>
+    </header>
+
+    <div class="search-wrapper">
+      <div class="search-container">
+        <input 
+          type="text" 
+          class="search-input" 
+          id="searchInput"
+          placeholder="Enter GitHub username (e.g., octocat)"
+        >
+        <button class="search-btn" id="searchBtn" onclick="searchUser()">
+          Search
+        </button>
+      </div>
+      <div class="error-message" id="errorMessage"></div>
+    </div>
+
+    <div id="content">
+      <div class="empty-state">
+        <h2 class="empty-title">🔍 Search for a GitHub User</h2>
+        <p class="empty-text">Enter a username above to view their profile and repositories</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const searchInput = document.getElementById('searchInput');
+    const searchBtn = document.getElementById('searchBtn');
+    const errorMessage = document.getElementById('errorMessage');
+    const content = document.getElementById('content');
+
+    searchInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') searchUser();
+    });
+
+    async function searchUser() {
+      const username = searchInput.value.trim();
+      
+      if (!username) {
+        showError('Please enter a GitHub username');
+        return;
+      }
+
+      hideError();
+      searchBtn.disabled = true;
+      searchBtn.textContent = 'Searching...';
+
+      content.innerHTML = '<div class="loading"><div class="spinner"></div><p>Searching...</p></div>';
+
+      try {
+        const userResponse = await fetch(`https://api.github.com/users/${username}`);
+        
+        if (!userResponse.ok) {
+          throw new Error('User not found');
+        }
+
+        const user = await userResponse.json();
+        
+        const reposResponse = await fetch(`https://api.github.com/users/${username}/repos?sort=updated&per_page=12`);
+        const repos = await reposResponse.json();
+
+        displayProfile(user, repos);
+      } catch (err) {
+        showError('User not found. Please check the username and try again.');
+        content.innerHTML = `
+          <div class="empty-state">
+            <h2 class="empty-title">❌ User Not Found</h2>
+            <p class="empty-text">Please check the username and try again</p>
+          </div>
+        `;
+      } finally {
+        searchBtn.disabled = false;
+        searchBtn.textContent = 'Search';
+      }
+    }
+
+    function displayProfile(user, repos) {
+      content.innerHTML = `
+        <div class="profile-section active">
+          <div class="profile-card">
+            <div class="profile-header">
+              <img src="${user.avatar_url}" alt="${user.name || user.login}" class="avatar">
+              <div class="profile-info">
+                <h2 class="profile-name">${user.name || user.login}</h2>
+                <p class="profile-username">@${user.login}</p>
+                ${user.bio ? `<p class="profile-bio">${user.bio}</p>` : ''}
+                
+                <div class="profile-meta">
+                  ${user.location ? `<div class="meta-item">📍 ${user.location}</div>` : ''}
+                  ${user.company ? `<div class="meta-item">🏢 ${user.company}</div>` : ''}
+                  ${user.blog ? `<div class="meta-item">🔗 <a href="${user.blog.startsWith('http') ? user.blog : 'https://' + user.blog}" target="_blank" style="color: #58a6ff; text-decoration: none;">${user.blog}</a></div>` : ''}
+                </div>
+              </div>
+            </div>
+
+            <div class="stats-grid">
+              <div class="stat-item">
+                <div class="stat-label">Followers</div>
+                <div class="stat-value">${user.followers.toLocaleString()}</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">Following</div>
+                <div class="stat-value">${user.following.toLocaleString()}</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">Public Repos</div>
+                <div class="stat-value">${user.public_repos}</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-label">Public Gists</div>
+                <div class="stat-value">${user.public_gists}</div>
+              </div>
+            </div>
+          </div>
+
+          ${repos.length > 0 ? `
+          <h3 class="section-title">📦 Popular Repositories</h3>
+          <div class="repos-grid">
+            ${repos.map(repo => `
+              <a href="${repo.html_url}" target="_blank" class="repo-card">
+                <div class="repo-name">${repo.name}</div>
+                <p class="repo-description">${repo.description || 'No description available'}</p>
+                <div class="repo-footer">
+                  ${repo.language ? `
+                  <div class="repo-language">
+                    <span class="language-dot"></span>
+                    ${repo.language}
+                  </div>` : '<div></div>'}
+                  <div class="repo-stats">
+                    <span>⭐ ${repo.stargazers_count}</span>
+                    <span>🔱 ${repo.forks_count}</span>
+                  </div>
+                </div>
+              </a>
+            `).join('')}
+          </div>` : ''}
+        </div>
+      `;
+    }
+
+    function showError(message) {
+      errorMessage.textContent = message;
+      errorMessage.classList.add('show');
+    }
+
+    function hideError() {
+      errorMessage.classList.remove('show');
+    }
+  </script>
+</body>
+</html>
