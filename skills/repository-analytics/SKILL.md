@@ -1,4 +1,4 @@
-﻿---
+---
 name: repository-analytics
 description: Analyzes developer repositories, calculating language distributions, star popularity, and fork metrics
 ---

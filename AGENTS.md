@@ -1,4 +1,4 @@
-﻿# AGENTS.md — GitHub Profile Search Universal Agent Instructions
+# AGENTS.md — GitHub Profile Search Universal Agent Instructions
 
 ## Overview
 GitHub Profile Search is an open-source, OpenGAP-compliant developer intelligence copilot. It queries the official GitHub REST API v3 to retrieve, summarize, and analyze developer profiles, repository statistics, and open-source contributions.

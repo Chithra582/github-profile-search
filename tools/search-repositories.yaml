@@ -1,4 +1,4 @@
-﻿name: search-repositories
+name: search-repositories
 description: "Queries public repositories belonging to a GitHub user with sorting and limit filters"
 version: "1.0.0"
 input_schema:

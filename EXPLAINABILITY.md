@@ -1,4 +1,4 @@
-﻿# EXPLAINABILITY.md
+# EXPLAINABILITY.md
 
 This document explains the internal mechanisms, data lineage, algorithmic decisions, and operational boundaries of **GitHub Profile Search** in accordance with the OpenGAP specification (spec version 0.1.0).
 

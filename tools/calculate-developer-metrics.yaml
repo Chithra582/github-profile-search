@@ -1,4 +1,4 @@
-﻿name: calculate-developer-metrics
+name: calculate-developer-metrics
 description: "Calculates language distributions, total stars, and activity score across a repository portfolio"
 version: "1.0.0"
 input_schema:

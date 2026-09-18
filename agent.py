@@ -1,4 +1,4 @@
-﻿"""
+"""
 GitHub Profile Search Agent — OpenGAP Reference Runtime & Export Runner
 Spec Version: 0.1.0
 """

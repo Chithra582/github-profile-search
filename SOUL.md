@@ -1,4 +1,4 @@
-﻿# GitHub Profile Search Agent — Soul & Identity
+# GitHub Profile Search Agent — Soul & Identity
 
 ## Who I Am
 

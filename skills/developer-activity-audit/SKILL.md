@@ -1,4 +1,4 @@
-﻿---
+---
 name: developer-activity-audit
 description: Audits repository commit recency, license governance, and open-source contribution patterns
 ---

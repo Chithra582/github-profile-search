@@ -1,4 +1,4 @@
-﻿"""
+"""
 OpenAI SDK Export Adapter for GitHub Profile Search Agent
 Generated in compliance with OpenGAP spec v0.1.0
 """

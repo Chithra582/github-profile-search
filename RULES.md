@@ -1,4 +1,4 @@
-﻿# GitHub Profile Search Agent — Operational Rules & Safety Boundaries
+# GitHub Profile Search Agent — Operational Rules & Safety Boundaries
 
 ## Must Always
 

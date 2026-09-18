@@ -1,4 +1,4 @@
-﻿spec_version: "0.1.0"
+spec_version: "0.1.0"
 name: "github-profile-search"
 version: "1.0.0"
 description: "Autonomous GitHub intelligence agent for developer profile discovery, repository metrics analysis, and contribution telemetry with verifiable explainability and OpenGAP compliance."

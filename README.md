@@ -1,4 +1,4 @@
-﻿# GitHub Profile Search Agent 🔍
+# GitHub Profile Search Agent 🔍
 
 [![Spec: OpenGAP v0.1.0](https://img.shields.io/badge/spec-OpenGAP%20v0.1.0-blue)](https://github.com/open-gitagent/opengap)
 [![Passport: Certified](https://img.shields.io/badge/HiDevs%20GitAgent%20Passport-Approved-purple)](https://app.hidevs.xyz/passport)

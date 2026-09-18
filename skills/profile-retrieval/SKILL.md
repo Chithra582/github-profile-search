@@ -1,4 +1,4 @@
-﻿---
+---
 name: profile-retrieval
 description: Fetches canonical GitHub user profile information, biographical metadata, and community reach stats
 ---

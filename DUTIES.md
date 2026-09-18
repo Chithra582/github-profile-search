@@ -1,4 +1,4 @@
-﻿# GitHub Profile Search Agent — Segregation of Duties & Role Boundaries
+# GitHub Profile Search Agent — Segregation of Duties & Role Boundaries
 
 ## Role Declarations
 

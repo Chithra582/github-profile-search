@@ -1,4 +1,4 @@
-﻿name: fetch-user-profile
+name: fetch-user-profile
 description: "Retrieves public profile metadata and account metrics for a given GitHub username"
 version: "1.0.0"
 input_schema:
