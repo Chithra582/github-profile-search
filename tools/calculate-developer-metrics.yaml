@@ -1,0 +1,23 @@
+﻿name: calculate-developer-metrics
+description: "Calculates language distributions, total stars, and activity score across a repository portfolio"
+version: "1.0.0"
+input_schema:
+  type: object
+  properties:
+    repositories:
+      type: array
+      description: "List of repository JSON objects from GitHub API"
+  required:
+    - repositories
+output_schema:
+  type: object
+  properties:
+    total_stars:
+      type: integer
+    total_forks:
+      type: integer
+    languages:
+      type: object
+      description: "Language percentages map, e.g. {'TypeScript': 65.5, 'Python': 34.5}"
+    top_language:
+      type: string

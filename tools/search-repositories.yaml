@@ -1,0 +1,46 @@
+﻿name: search-repositories
+description: "Queries public repositories belonging to a GitHub user with sorting and limit filters"
+version: "1.0.0"
+input_schema:
+  type: object
+  properties:
+    username:
+      type: string
+      description: "GitHub handle"
+    sort:
+      type: string
+      description: "Sort order: updated, stars, created, or pushed"
+      enum:
+        - updated
+        - stars
+        - created
+        - pushed
+      default: updated
+    per_page:
+      type: integer
+      description: "Number of repositories to return (max 100)"
+      default: 12
+  required:
+    - username
+output_schema:
+  type: object
+  properties:
+    repositories:
+      type: array
+      items:
+        type: object
+        properties:
+          name:
+            type: string
+          html_url:
+            type: string
+          description:
+            type: string
+          language:
+            type: string
+          stargazers_count:
+            type: integer
+          forks_count:
+            type: integer
+          updated_at:
+            type: string

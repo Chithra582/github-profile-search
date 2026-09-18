@@ -1,0 +1,34 @@
+﻿name: fetch-user-profile
+description: "Retrieves public profile metadata and account metrics for a given GitHub username"
+version: "1.0.0"
+input_schema:
+  type: object
+  properties:
+    username:
+      type: string
+      description: "GitHub handle (e.g. octocat, torvalds)"
+  required:
+    - username
+output_schema:
+  type: object
+  properties:
+    login:
+      type: string
+    name:
+      type: string
+    avatar_url:
+      type: string
+    bio:
+      type: string
+    public_repos:
+      type: integer
+    followers:
+      type: integer
+    following:
+      type: integer
+    location:
+      type: string
+    company:
+      type: string
+    blog:
+      type: string

@@ -1,0 +1,56 @@
+﻿spec_version: "0.1.0"
+name: "github-profile-search"
+version: "1.0.0"
+description: "Autonomous GitHub intelligence agent for developer profile discovery, repository metrics analysis, and contribution telemetry with verifiable explainability and OpenGAP compliance."
+author: "Chithra R"
+license: "MIT"
+
+model:
+  preferred: "gemini-2.0-flash"
+  fallback:
+    - "gpt-4o-mini"
+    - "claude-3-5-sonnet"
+  constraints:
+    temperature: 0.2
+    max_tokens: 4096
+
+skills:
+  - profile-retrieval
+  - repository-analytics
+  - developer-activity-audit
+
+tools:
+  - fetch-user-profile
+  - search-repositories
+  - calculate-developer-metrics
+
+compliance:
+  risk_tier: standard
+  frameworks:
+    - gdpr
+  data_governance:
+    pii_handling: redact
+    data_classification: internal
+    consent_required: false
+    cross_border: true
+    bias_testing: false
+  recordkeeping:
+    audit_logging: true
+    log_format: structured_json
+    retention_period: 1y
+    immutable: true
+  supervision:
+    human_in_the_loop: conditional
+    override_capability: true
+    kill_switch: true
+
+tags:
+  - "developer-tools"
+  - "github-api"
+  - "profile-search"
+  - "open-source"
+  - "developer-analytics"
+
+metadata:
+  domain: "developer-tools"
+  category: "Developer tools"

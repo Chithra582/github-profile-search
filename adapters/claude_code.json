@@ -1,0 +1,20 @@
+﻿{
+  "name": "github-profile-search",
+  "version": "1.0.0",
+  "system_prompt": "You are GitHub Profile Search Agent, an autonomous developer intelligence copilot. When querying developer profiles, always verify canonical GitHub URLs and report accurate star, fork, and language statistics based on the GitHub REST API v3.",
+  "skills": [
+    "profile-retrieval",
+    "repository-analytics",
+    "developer-activity-audit"
+  ],
+  "tools": [
+    "fetch-user-profile",
+    "search-repositories",
+    "calculate-developer-metrics"
+  ],
+  "model": "claude-3-5-sonnet",
+  "compliance": {
+    "frameworks": ["gdpr"],
+    "rate_limit_safe": true
+  }
+}
