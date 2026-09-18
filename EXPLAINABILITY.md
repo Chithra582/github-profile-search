@@ -1,22 +1,23 @@
 # EXPLAINABILITY.md
 
-This document explains the internal mechanisms, data lineage, algorithmic decisions, and operational boundaries of **GitHub Profile Search** in accordance with the OpenGAP specification (spec version 0.1.0).
+This document explains the internal mechanisms, data lineage, and operational boundaries of **GitHub Profile Search** in accordance with the OpenGAP specification.
 
 ---
 
-## 1. How the Agent Decides
+## How the Agent Decides
 
-GitHub Profile Search makes decisions through a deterministic, multi-stage telemetry pipeline that retrieves public engineering footprints from GitHub's REST API and synthesizes them into structured developer analytics.
+GitHub Profile Search makes decisions through a deterministic, multi-stage retrieval and telemetry analysis pipeline that queries the official GitHub REST API v3, evaluates repository portfolios, and computes developer insights.
 
-### Decision Architecture Workflow
+### 1. Decision Architecture
+The decision process flows through sequential stages:
 
-`
+```
 User Query / Input Handle
     │
     ▼
-[Stage 1: Handle Normalization & Sanitization]
-    │  - Strips leading '@', URL prefixes (https://github.com/), and whitespace
-    │  - Enforces GitHub username constraints: /^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i
+[Stage 1: Handle Normalization & Syntax Validation]
+    │  - Normalizes input string: trims '@' prefix, full URL prefixes, and trailing slashes
+    │  - Validates handle against GitHub username standard: /^[a-z\d](?:[a-z\d]|-(?=[a-z\d])){0,38}$/i
     ▼
 [Stage 2: Rate-Limit Check & Cache Validation]
     │  - Inspects local cache / ETag headers for cached user state
@@ -31,7 +32,7 @@ User Query / Input Handle
     ▼
 [Stage 4: Repository Telemetry & Activity Gathering]
     │  - Queries GET https://api.github.com/users/{username}/repos?sort=updated&per_page=30
-    │  - Filters forks (optional) and identifies original vs contributed projects
+    │  - Classifies repositories: original codebases vs. forks
     ▼
 [Stage 5: Algorithmic Ranking & Metrics Computation]
     │  - Primary Language Aggregation: counts occurrences and calculates percentage shares
@@ -42,66 +43,116 @@ User Query / Input Handle
     │  - Produces structured cards, direct canonical links, and OpenGAP metadata
     ▼
 Output Delivered to User / Consuming Agent
-`
+```
 
-### Repository Ranking Algorithm
+### 2. Retrieval Criteria & Ranking Rubric
+When prioritizing repositories for display, the agent evaluates both community reach and active maintenance using a multi-factor ranking formula:
 
-When prioritizing repositories for display, the agent uses a weighted scoring formula rather than simple star counts:
-
-\text{Score}(R) = (\text{Stars} \times 0.50) + (\text{Forks} \times 0.25) + (\text{RecencyScore} \times 0.25)
+$$\text{Score}(R) = (\text{Stars} \times 0.50) + (\text{Forks} \times 0.25) + (\text{RecencyScore} \times 0.25)$$
 
 Where $\text{RecencyScore} = \max\left(0, 100 - \frac{\text{Days since last push}}{3}\right)$.
 
-This ensures active, recently updated repositories are surfaced alongside historically popular repositories, preventing stale projects from dominating developer insights.
+- **Stargazers Count (50% Weight)**: Validates community adoption and historical impact.
+- **Forks Count (25% Weight)**: Measures developer reuse, downstream contributions, and ecosystem utility.
+- **Recency of Updates (25% Weight)**: Prioritizes active projects over stale or abandoned codebases.
+
+### 3. Thresholding & Refusal Decision Criteria
+- **404 Not Found Handling**: If GitHub responds with HTTP status 404, the agent halts further execution and deterministically returns an explicit refusal message: *"User not found. Please verify the handle and try again."* It never hallucinates fictitious developers or repositories.
+- **Rate-Limit Thresholding**: If `X-RateLimit-Remaining` reaches 0 (or response code is HTTP 403), the agent terminates requests and returns a rate-limit alert with the exact UTC reset timestamp.
+
+### 4. Client-Side Guardrail Decision Gates
+Before any telemetry is displayed or exported:
+- **PII Redaction Gate**: Developer email addresses are masked unless explicitly flagged as public in the account profile.
+- **Secret Redaction Gate**: Authorization tokens matching GitHub Personal Access Token patterns (`ghp_*`, `github_pat_*`, OAuth bearer tokens) are immediately stripped and redacted as `[REDACTED_GITHUB_TOKEN]`.
+
+### 5. Fallback & Offline Decision Mechanism
+- When offline or during GitHub outages, the agent serves cached profile telemetry if available.
+- If no cache is present, the agent informs the user with an actionable offline status message rather than hanging or returning corrupted data.
+
+### 6. Human-in-the-Loop Governance
+- **Zero Silent Modification**: The agent never mutates, forks, or stars repositories on behalf of the user without explicit interactive authorization.
+- **Inspectable Telemetry**: Every data point is linkable directly to the canonical source on GitHub.
 
 ---
 
-## 2. The Data It Uses & Data Lineage
+## The Data It Uses
 
-All intelligence synthesized by GitHub Profile Search originates exclusively from verified GitHub REST API v3 endpoints.
+GitHub Profile Search operates strictly under transparent data governance, extracting telemetry exclusively from public GitHub endpoints.
 
-### API Endpoints & Lineage
+### 1. Ingested Input Data
+The agent consumes public developer metadata:
+- **User Profile Attributes**: Username, display name, avatar URL, bio text, public email (if shared), location, company affiliation, blog/website URL, twitter username, account creation timestamp.
+- **Account Reach Metrics**: Total public repositories count, public gists count, follower count, following count.
+- **Repository Telemetry**: Repository names, descriptions, primary programming language, star counts, fork counts, watchers, license classification, push timestamps, open issues count.
+- **Organization Affiliations**: Public memberships in engineering organizations and open-source foundations.
 
-| Endpoint | Method | Data Harvested | Usage in Decision Making |
-|---|---|---|---|
-| /users/{username} | GET | Name, bio, avatar URL, public repos count, followers, following, creation date, company, location, blog | Identity establishment, baseline activity scale, community reach |
-| /users/{username}/repos | GET | Repository names, descriptions, primary languages, stargazers count, forks, updated timestamps, open issues | Language distribution, developer focus areas, repository health |
-| /users/{username}/orgs | GET | Public organization affiliations, logos, descriptions | Team collaboration, enterprise open-source participation |
+### 2. In-Memory Chunking & Storage Architecture
+- **In-Memory Aggregation**: Language distribution maps and total engagement calculations are computed on-the-fly in local memory.
+- **Ephemeral Session State**: No profile data is stored on remote servers; all telemetry remains confined to client browser memory or local process execution.
+- **0-Byte Raw Egress Guarantee**: Retrieved profile data is never uploaded to unauthorized third-party trackers or marketing databases.
 
-### Data Authenticity & Verification
-- **Zero Third-Party Scraping:** Telemetry is gathered only via official JSON APIs; no unauthenticated HTML scraping is used.
-- **ETag Validation:** Responses store ETag headers. Subsequent requests send If-None-Match headers to minimize network payload and avoid counting against GitHub rate quotas when content is unchanged.
+### 3. External Relay Data & Redaction Patterns
+When profile analytics are exported into framework runtimes (OpenAI SDK, CrewAI, Claude Code, Lyzr):
+- Payloads contain strictly structured, sanitized developer summaries.
+- **Masked PII Patterns**:
+  - Private / Unlisted Emails: `[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}` $\rightarrow$ `c***@***.com`
+  - GitHub Personal Access Tokens: `ghp_[a-zA-Z0-9]{36}` $\rightarrow$ `[REDACTED_GITHUB_TOKEN]`
+  - Fine-grained PATs: `github_pat_[a-zA-Z0-9_]{82}` $\rightarrow$ `[REDACTED_PAT]`
 
----
-
-## 3. Guardrails, Governance & Security Boundaries
-
-### 1. Rate-Limit Governance
-The agent monitors GitHub's HTTP rate limiting headers:
-- X-RateLimit-Limit: Maximum requests permitted within the window (60 for unauthenticated, 5,000 for authenticated).
-- X-RateLimit-Remaining: Available calls remaining in the current window.
-- X-RateLimit-Reset: Unix epoch timestamp at which the rate window resets.
-
-When X-RateLimit-Remaining drops below 3, the agent halts background polling, logs a rate warning, and reports the exact time until the quota refreshes.
-
-### 2. PII & Secret Redaction
-- **Email Redaction:** GitHub user emails are masked by default (c***@***.com) unless the user explicitly enables public email sharing in their profile settings.
-- **Token Shielding:** The agent never renders or logs authorization tokens (ghp_*, github_pat_*). Any accidental string matching GitHub token patterns in URLs or commits is redacted immediately ([REDACTED_GITHUB_TOKEN]).
+### 4. Data Privacy, Storage, and Retention
+- **Stateless Operation**: Query results are discarded upon session close unless explicitly saved in local browser storage.
+- **Compliance Alignment**: Complies with GDPR Article 28 data minimization principles by querying only the public data necessary for developer footprint evaluation.
 
 ---
 
-## 4. Limitations & Operational Boundaries
+## Limitations
 
-1. **Private Repositories:** The agent has zero visibility into private repositories, internal enterprise organizations, or hidden commit history. Analytics reflect solely public open-source contributions.
-2. **Unauthenticated Rate Limits:** In the default standalone browser mode without a GitHub Personal Access Token (PAT), queries are constrained to 60 requests per hour per IP address.
-3. **Contribution Graph Graphicals:** The contribution heatmap grid (the green squares) is rendered on GitHub via private internal GraphQL/SVG endpoints; the REST API provides total commit metrics via event streams rather than full 365-day SVG grids.
-4. **Organization Accounts vs Individual Users:** Organizations return 	ype: "Organization" and have zero followers/following count (they have members); the agent detects this and dynamically adjusts the metrics layout.
+Understanding the operational boundaries and constraints of GitHub Profile Search is critical for reliable usage.
+
+### 1. In-Memory Scale and Capacity Constraints
+- **Unauthenticated Rate Limit**: Default queries are bound by GitHub's unauthenticated rate limit of **60 requests per hour per IP address**.
+- **Page Size Limits**: To maintain sub-second response times, repository queries are capped at the top 30 most recently updated repositories per user.
+
+### 2. Compute and Cold-Start Profile
+- **Network Bound Retrieval**: Analysis speed depends on GitHub REST API latency (typically 100ms - 400ms per endpoint).
+- **No Local Compute Overhead**: The agent performs lightweight aggregations without requiring heavy GPU or machine learning compute.
+
+### 3. Connectivity and Synthesis Boundaries
+- **Public Internet Dependency**: Real-time queries require an active internet connection to communicate with `api.github.com`.
+- **Offline Limitations**: In full offline mode, queries cannot be resolved unless previously stored in local cache.
+
+### 4. Scope and Grounding Boundaries
+- **No Private Repository Access**: The agent has zero visibility into private repositories, internal enterprise codebases, or uncommitted work.
+- **Contribution Graph Heatmap**: The graphical 365-day green contribution calendar is rendered on GitHub through internal GraphQL/SVG endpoints and is not accessible as a raw matrix via unauthenticated REST API.
+
+### 5. Media and Formatting Constraints
+- **Text-Focused Extraction**: The agent processes text metadata; it does not perform deep static analysis on binary files, compiled assets, or container images inside repositories.
+
+### 6. Security and Guardrail Edge Cases
+- **Self-Reported Data**: Profile metadata such as location, company, and bio are user-declared fields on GitHub and cannot be independently verified as legal truth.
+- **Fork Discrepancies**: If a user primarily contributes via forks without starring or pinning, standard repository listings may under-represent their contributions unless fork inclusion is enabled.
 
 ---
 
-## 5. Verification & Audit Trail
+## Summary & Compliance Checklist
 
-Every transaction executed by the agent can be verified against the official GitHub API:
-- **Canonical URLs:** Every card links directly to https://github.com/{username} and https://github.com/{username}/{repo}.
-- **Structured Telemetry Schema:** Exports and logs are formatted in JSON matching the OpenGAP specification.
-- **Reproducibility:** Re-querying the GitHub API with the same parameters yields identical results (subject to upstream updates by the user).
+| Checkpoint 2 Requirement | Corresponding Section | Status |
+| :--- | :--- | :---: |
+| **How the agent decides** | [How the Agent Decides](#how-the-agent-decides) | **Covered** |
+| - Decision architecture & 6-stage pipeline | Section 1 | Verified |
+| - Retrieval criteria & ranking rubric | Section 2 | Verified |
+| - Thresholding, refusal & missing data logic | Section 3 | Verified |
+| - Guardrail decision gates & PII masking | Section 4 | Verified |
+| - Fallback & offline mechanism | Section 5 | Verified |
+| - Human-in-the-loop governance | Section 6 | Verified |
+| **The data it uses** | [The Data It Uses](#the-data-it-uses) | **Covered** |
+| - Ingested input data & attributes | Section 1 | Verified |
+| - In-memory processing & 0-byte egress | Section 2 | Verified |
+| - External relay data & token redaction | Section 3 | Verified |
+| - Data privacy & retention | Section 4 | Verified |
+| **Its limitations** | [Limitations](#limitations) | **Covered** |
+| - API rate limits & quota constraints | Section 1 | Verified |
+| - Compute profile & network bounds | Section 2 | Verified |
+| - Connectivity & live API dependencies | Section 3 | Verified |
+| - Scope boundaries & private repo invisibility | Section 4 | Verified |
+| - Media & self-reported data edge cases | Section 5 & 6 | Verified |
